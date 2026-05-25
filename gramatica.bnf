@@ -1,0 +1,128 @@
+<program> ::= "program" <statement_list> "end"
+
+<statement_list> ::= <statement>
+                   | <statement> <statement_list>
+
+<statement> ::= <declaration>
+              | <assignment>
+              | <if_statement>
+              | <for_statement>
+              | <while_statement>
+              | <do_while_statement>
+              | <print_statement>
+
+<declaration> ::= <type> <identifier> "=" <expression> ";"
+
+<type> ::= "int"
+         | "float"
+         | "char"
+         | "bool"
+         | "string"
+
+<assignment> ::= <identifier> "=" <expression> ";"
+
+<if_statement> ::= "if" "(" <condition> ")" "{" <statement_list> "}"
+                 | "if" "(" <condition> ")" "{" <statement_list> "}" "else" "{" <statement_list> "}"
+                 | "if" "(" <condition> ")" "{" <statement_list> "}" <elseif_chain>
+
+<elseif_chain> ::= "elseif" "(" <condition> ")" "{" <statement_list> "}"
+                 | "elseif" "(" <condition> ")" "{" <statement_list> "}" <elseif_chain>
+
+<for_statement> ::= "for" "(" <declaration> <condition> ";" <assignment_no_semicolon> ")" "{" <statement_list> "}"
+
+<assignment_no_semicolon> ::= <identifier> "=" <expression>
+
+<while_statement> ::= "while" "(" <condition> ")" "{" <statement_list> "}"
+
+<do_while_statement> ::= "do" "{" <statement_list> "}" "while" "(" <condition> ")" ";"
+
+<print_statement> ::= "print" "(" <expression> ")" ";"
+
+<condition> ::= <expression> <rel_op> <expression>
+              | <condition> <logic_op> <condition>
+              | "!" <condition>
+
+<rel_op> ::= "=="
+           | "!="
+           | "<"
+           | ">"
+           | "<="
+           | ">="
+
+<logic_op> ::= "&&"
+             | "||"
+
+<expression> ::= <term>
+               | <expression> "+" <term>
+               | <expression> "-" <term>
+
+<term> ::= <factor>
+         | <term> "*" <factor>
+         | <term> "/" <factor>
+         | <term> "%" <factor>
+
+<factor> ::= <identifier>
+           | <number>
+           | <float_number>
+           | <char_literal>
+           | <string_literal>
+           | <boolean_literal>
+           | "(" <expression> ")"
+
+<boolean_literal> ::= "true"
+                    | "false"
+
+<identifier> ::= <letter> <identifier_tail>
+
+<identifier_tail> ::= <letter> <identifier_tail>
+                    | <digit> <identifier_tail>
+                    | "_" <identifier_tail>
+                    | ε
+
+<number> ::= <digit> <number_tail>
+
+<number_tail> ::= <digit> <number_tail>
+                | ε
+
+<float_number> ::= <number> "." <number>
+
+<char_literal> ::= "'" <char_element> "'"
+
+<string_literal> ::= "\"" <string_content> "\""
+
+<string_content> ::= <char_sequence>
+
+<char_sequence> ::= <char_element>
+                  | <char_element> <char_sequence>
+
+<char_element> ::= <letter>
+                 | <digit>
+                 | " "
+                 | "!"
+                 | "?"
+                 | "."
+                 | ","
+                 | ":"
+                 | ";"
+                 | "@"
+                 | "#"
+                 | "$"
+                 | "%"
+                 | "&"
+                 | "_"
+                 | "-"
+                 | "("
+                 | ")"
+                 | "/"
+
+<letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g"
+           | "h" | "i" | "j" | "k" | "l" | "m" | "n"
+           | "o" | "p" | "q" | "r" | "s" | "t" | "u"
+           | "v" | "w" | "x" | "y" | "z"
+           | "A" | "B" | "C" | "D" | "E" | "F" | "G"
+           | "H" | "I" | "J" | "K" | "L" | "M" | "N"
+           | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
+           | "V" | "W" | "X" | "Y" | "Z"
+
+<digit> ::= "0" | "1" | "2" | "3" | "4"
+          | "5" | "6" | "7" | "8" | "9"
