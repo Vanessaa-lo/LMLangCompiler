@@ -196,13 +196,21 @@ void parseAssignment() {
 
 /* print */
 void parsePrint() {
+    char printValue[100];
+
     expect(TOKEN_PRINT);
     expect(TOKEN_LPAREN);
 
+    if (currentToken.type == TOKEN_STRING_LITERAL) {
+        strcpy(printValue, currentToken.lexeme);
+
+        printf("%s\n", printValue);
+    }
+
     parseExpression();
 
-    /* AST */
-    appendNode(&astRoot, createNode("PRINT", ""));
+    appendNode(&astRoot, createNode("PRINT", printValue));
+
     expect(TOKEN_RPAREN);
     expect(TOKEN_SEMICOLON);
 }
