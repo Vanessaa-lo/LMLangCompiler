@@ -1,0 +1,4 @@
+program
+
+int edad = 20;
+print("Hola");

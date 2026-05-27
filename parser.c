@@ -30,7 +30,33 @@ void expect(TokenType expected) {
     if (currentToken.type == expected) {
         advance();
     } else {
-        syntaxError("Token inesperado");
+        if (expected == TOKEN_END) {
+            syntaxError("Se esperaba 'end' al final del programa");
+        }
+        else if (expected == TOKEN_SEMICOLON) {
+            syntaxError("Se esperaba ';'");
+        }
+        else if (expected == TOKEN_RPAREN) {
+            syntaxError("Se esperaba ')'");
+        }
+        else if (expected == TOKEN_LPAREN) {
+            syntaxError("Se esperaba '('");
+        }
+        else if (expected == TOKEN_RBRACE) {
+            syntaxError("Se esperaba '}'");
+        }
+        else if (expected == TOKEN_LBRACE) {
+            syntaxError("Se esperaba '{'");
+        }
+        else if (expected == TOKEN_IDENTIFIER) {
+            syntaxError("Se esperaba un identificador");
+        }
+        else if (expected == TOKEN_ASSIGN) {
+            syntaxError("Se esperaba '='");
+        }
+        else {
+            syntaxError("Token inesperado");
+        }
     }
 }
 
@@ -369,12 +395,17 @@ void parseProgram() {
         parseStatement();
     }
 
+    if (currentToken.type == TOKEN_EOF) {
+        syntaxError("Se esperaba 'end' al final del programa");
+    }
+
     expect(TOKEN_END);
 
     printf("Analisis sintactico completado correctamente.\n");
 
     printf("\n=== AST ===\n");
-    printAST(astRoot, 0);}
+    printAST(astRoot, 0);
+}
 
 /* init */
 void initParser(const char *filename) {
