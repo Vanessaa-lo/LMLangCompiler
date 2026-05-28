@@ -1,0 +1,25 @@
+program
+
+int x = 5;
+
+if (x > 10) {
+
+    print(1);
+}
+
+elseif (x > 7) {
+
+    print(2);
+}
+
+elseif (x > 3) {
+
+    print(3);
+}
+
+else {
+
+    print(4);
+
+}
+end

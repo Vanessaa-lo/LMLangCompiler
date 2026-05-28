@@ -1,0 +1,151 @@
+program
+
+/* =========================
+   DECLARACIONES
+========================= */
+
+int x = 10;
+float y = 2.5;
+bool activo = true;
+char letra = 'A';
+string nombre = "LMCompiler";
+
+/* =========================
+   EXPRESIONES
+========================= */
+
+int suma = x + 5 * 2;
+float mezcla = y + x / 2;
+
+int parentesis = (2 + 3) * (4 + 1);
+
+int negativo = -5;
+float negativo2 = -(y + 3);
+
+/* =========================
+   BOOL
+========================= */
+
+bool estado = !false;
+
+/* =========================
+   ASIGNACION
+========================= */
+
+int z;
+z = 100;
+
+/* =========================
+   IF + LOGICA
+========================= */
+
+if (x > 5 && y < 10) {
+
+    print(x);
+
+    int interno = 50;
+
+    if (!(interno < 20)) {
+
+        print(interno);
+    }
+}
+
+/* =========================
+   SHADOWING
+========================= */
+
+int valor = 1;
+
+if (1 == 1) {
+
+    int valor = 99;
+
+    print(valor);
+}
+
+print(valor);
+
+/* =========================
+   WHILE
+========================= */
+
+while (x > 0) {
+
+    int temp = x;
+
+    x = x - 1;
+
+    print(temp);
+}
+
+/* =========================
+   DO WHILE
+========================= */
+
+do {
+
+    z = z - 10;
+
+} while (z > 0);
+
+/* =========================
+   FOR
+========================= */
+
+for (int i = 0; i < 5; i = i + 1) {
+
+    print(i);
+}
+
+/* =========================
+   DIVISION Y MODULO
+========================= */
+
+int division = 20 / 2;
+int modulo = 15 % 4;
+
+/* =========================
+   EXPRESION COMPLEJA
+========================= */
+
+int resultado =
+    (2 + 3) * (4 + 1) - 6 / 2;
+
+print(resultado);
+
+/* =========================
+   SCOPES ANIDADOS
+========================= */
+
+if (resultado > 10) {
+
+    int a = 1;
+
+    if (a == 1) {
+
+        int b = 2;
+
+        if (b == 2) {
+
+            int c = 3;
+
+            print(a);
+            print(b);
+            print(c);
+        }
+
+    }
+}
+
+/* =========================
+   ERRORES FINALES
+========================= */
+
+/* variable fuera de scope */
+print(temp);
+
+/* variable for fuera de scope */
+print(i);
+
+end

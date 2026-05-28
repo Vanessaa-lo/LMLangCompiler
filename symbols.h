@@ -25,5 +25,6 @@ int symbolExistsInCurrentScope(const char *name, int scope);
 TokenType getVariableType(const char *name, int scope);
 void setInitialized(const char *name, int scope);
 int isInitialized(const char *name, int scope);
+void removeScopeSymbols(int scope);
 
 #endif

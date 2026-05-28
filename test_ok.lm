@@ -1,7 +1,66 @@
 program
 
-int x = 2 + 3 * 4;
+/* tipos */
+int x = 10;
+float y = 2.5;
+bool activo = true;
+char letra = 'A';
+string nombre = "LM";
 
-print(x);
+/* expresiones */
+int suma = x + 5 * 2;
+float mezcla = y + x / 2;
+
+/* negativos */
+int negativo = -5;
+float negativo2 = -(y + 3);
+
+/* bool */
+bool estado = !false;
+
+/* asignacion */
+int z;
+z = 100;
+
+/* condiciones */
+if (x > 5 && y < 10) {
+
+    print(x);
+
+    int interno = 50;
+
+    if (!(interno < 20)) {
+
+        print(interno);
+    }
+}
+
+/* while */
+while (x > 0) {
+
+    x = x - 1;
+}
+
+/* do while */
+do {
+
+    z = z - 10;
+
+} while (z > 0);
+
+/* for */
+for (int i = 0; i < 5; i = i + 1) {
+
+    print(i);
+}
+
+/* operaciones matematicas */
+int division = 20 / 2;
+int modulo = 15 % 4;
+
+/* expresiones complejas */
+int resultado = (2 + 3) * (4 + 1);
+
+print(resultado);
 
 end

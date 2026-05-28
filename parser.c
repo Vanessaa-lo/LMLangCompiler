@@ -921,7 +921,14 @@ void parseFor() {
 
     expect(TOKEN_RPAREN);
 
+
+    currentScope++;
+
     parseBlock();
+
+    removeScopeSymbols(currentScope);
+
+    currentScope--;
 }
 
 /* while */
@@ -1009,6 +1016,8 @@ void parseBlock() {
     }
 
     expect(TOKEN_RBRACE);
+    /* eliminar variables del scope */
+    removeScopeSymbols(currentScope);
 
     currentScope--;
     nestingLevel--;

@@ -174,5 +174,29 @@ int isInitialized(const char *name, int scope) {
     }
 
     return initialized;
-}  
+} 
+
+/* eliminar simbolos del scope */
+void removeScopeSymbols(int scope) {
+
+    int i;
+    int j;
+
+    for (i = 0; i < symbolCount; i++) {
+
+        if (symbolTable[i].scope == scope) {
+
+            /* mover elementos */
+            for (j = i; j < symbolCount - 1; j++) {
+
+                symbolTable[j] =
+                    symbolTable[j + 1];
+            }
+
+            symbolCount--;
+
+            i--;
+        }
+    }
+}
         
