@@ -8,7 +8,12 @@
 typedef struct {
     char name[MAX_NAME];
     char type[MAX_TYPE];
+
     int scope;
+
+    /* inicializacion */
+    int initialized;
+
 } Symbol;
 
 void initSymbolTable();
@@ -18,5 +23,7 @@ Symbol* getSymbol(const char *name, int scope);
 void printSymbolTable();
 int symbolExistsInCurrentScope(const char *name, int scope);
 TokenType getVariableType(const char *name, int scope);
+void setInitialized(const char *name, int scope);
+int isInitialized(const char *name, int scope);
 
 #endif

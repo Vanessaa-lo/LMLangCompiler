@@ -1,0 +1,57 @@
+program
+
+/* declaraciones */
+int x = 5;
+float y = 3.5;
+bool activo = true;
+string nombre = "vanessa";
+char letra = 'A';
+
+/* expresiones */
+int suma = x + 2 * 3;
+float mezcla = y + x;
+
+/* negativos */
+int negativo = -5;
+float negativo2 = -(y + 2);
+
+/* bool */
+bool estado = !false;
+
+/* asignacion posterior */
+int z;
+z = 10;
+
+/* condiciones validas */
+if (x > 3 && y < 10) {
+
+    print(x);
+
+    int interno = 100;
+
+    if (!(interno < 50)) {
+
+        print(interno);
+    }
+}
+
+/* while */
+while (x < 10) {
+
+    x = x + 1;
+}
+
+/* do while */
+do {
+
+    z = z - 1;
+
+} while (z > 0);
+
+/* for */
+for (int i = 0; i < 5; i = i + 1) {
+
+    print(i);
+}
+
+end

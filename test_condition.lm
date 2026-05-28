@@ -1,0 +1,6 @@
+program
+
+if ("hola" > 5) {
+}
+
+end

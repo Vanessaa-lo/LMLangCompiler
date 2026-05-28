@@ -11,6 +11,8 @@ Token currentToken;
 int currentScope = 0;
 int nestingLevel = 0;
 ASTNode *astRoot = NULL;
+/* nodo temporal de expresion */
+ASTNode *expressionNode = NULL;
 
 /* avanzar */
 void advance() {
@@ -109,11 +111,63 @@ TokenType parseFactor() {
 
     TokenType type;
 
-    /* identificador */
+    /* negacion logica */
+if (currentToken.type == TOKEN_NOT) {
+
+    advance();
+
+    type = parseFactor();
+
+    /* solo bool */
+    if (type != TOKEN_BOOL) {
+
+        semanticError(
+            "Negacion logica invalida",
+            currentToken.line
+        );
+    }
+
+    return TOKEN_BOOL;
+}
+
+/* negativo */
+if (currentToken.type == TOKEN_MINUS) {
+
+        advance();
+
+        type = parseFactor();
+
+        /* no permitir string */
+        if (type == TOKEN_STRING) {
+
+            semanticError(
+                "Negativo invalido para string",
+                currentToken.line
+            );
+        }
+
+        /* no permitir bool */
+        if (type == TOKEN_BOOL) {
+
+            semanticError(
+                "Negativo invalido para bool",
+                currentToken.line
+            );
+        }
+
+        return type;
+    }
+
+     /* identificador */
     if (currentToken.type == TOKEN_IDENTIFIER) {
 
-type = getVariableType(currentToken.lexeme,
-                       currentScope);
+    char variableName[50];
+
+    strcpy(variableName, currentToken.lexeme);
+
+    /* obtener tipo real */
+    type = getVariableType(variableName,
+                        currentScope);
 
     if (type == TOKEN_ERROR) {
 
@@ -123,24 +177,46 @@ type = getVariableType(currentToken.lexeme,
         );
     }
 
-        type = TOKEN_INT;
+    /* verificar inicializacion */
+    if (!isInitialized(variableName,
+                    currentScope)) {
 
-        advance();
-
-        return type;
+        semanticError(
+            "Variable usada sin inicializar",
+            currentToken.line
+        );
     }
+    expressionNode =
+        createValueNode(
+            "IDENTIFIER",
+            variableName
+        );
 
+    advance();
+
+    return type;
+    }
     /* enteros */
     else if (currentToken.type == TOKEN_NUMBER) {
+
+        expressionNode =
+            createValueNode(
+                "NUMBER",
+                currentToken.lexeme
+            );
 
         advance();
 
         return TOKEN_INT;
     }
-
     /* flotantes */
     else if (currentToken.type == TOKEN_FLOAT_NUMBER) {
 
+    expressionNode =
+        createValueNode(
+            "FLOAT",
+            currentToken.lexeme
+        );
         advance();
 
         return TOKEN_FLOAT;
@@ -148,6 +224,12 @@ type = getVariableType(currentToken.lexeme,
 
     /* strings */
     else if (currentToken.type == TOKEN_STRING_LITERAL) {
+
+        expressionNode =
+            createValueNode(
+                "STRING",
+                currentToken.lexeme
+            );
 
         advance();
 
@@ -157,6 +239,11 @@ type = getVariableType(currentToken.lexeme,
     /* chars */
     else if (currentToken.type == TOKEN_CHAR_LITERAL) {
 
+        expressionNode =
+            createValueNode(
+                "CHAR",
+                currentToken.lexeme
+            );
         advance();
 
         return TOKEN_CHAR;
@@ -165,6 +252,11 @@ type = getVariableType(currentToken.lexeme,
     /* bool */
     else if (currentToken.type == TOKEN_TRUE ||
              currentToken.type == TOKEN_FALSE) {
+            expressionNode =
+            createValueNode(
+                "BOOL",
+                currentToken.lexeme
+            );
 
         advance();
 
@@ -207,7 +299,46 @@ TokenType parseTerm() {
 
         advance();
 
+
+        /* guardar nodos */
+        ASTNode *leftNode = expressionNode;
+
+        ASTNode *rightNode;
+
         rightType = parseFactor();
+
+        rightNode = expressionNode;
+
+        /* operador */
+        if (operatorType == TOKEN_MULTIPLY) {
+
+            expressionNode =
+                createOperatorNode(
+                    "*",
+                    leftNode,
+                    rightNode
+                );
+        }
+
+else if (operatorType == TOKEN_DIVIDE) {
+
+    expressionNode =
+        createOperatorNode(
+            "/",
+            leftNode,
+            rightNode
+        );
+}
+
+else if (operatorType == TOKEN_MOD) {
+
+    expressionNode =
+        createOperatorNode(
+            "%",
+            leftNode,
+            rightNode
+        );
+}
 
         /* Validacion semantica */
 
@@ -268,9 +399,38 @@ TokenType parseExpression() {
 
         operatorType = currentToken.type;
 
+        /* guardar nodo izquierdo */
+        ASTNode *leftNode = expressionNode;
+
         advance();
 
+        /* analizar lado derecho */
         rightType = parseTerm();
+
+        /* guardar nodo derecho */
+        ASTNode *rightNode = expressionNode;
+
+        /* crear operador AST */
+
+        if (operatorType == TOKEN_PLUS) {
+
+            expressionNode =
+                createOperatorNode(
+                    "+",
+                    leftNode,
+                    rightNode
+                );
+        }
+
+else if (operatorType == TOKEN_MINUS) {
+
+    expressionNode =
+        createOperatorNode(
+            "-",
+            leftNode,
+            rightNode
+        );
+}
 
         /* Strings */
 
@@ -318,37 +478,145 @@ TokenType parseExpression() {
 
     return leftType;
 }
-/* condición */
+/* condicion */
 void parseCondition() {
-    if (currentToken.type == TOKEN_NOT) {
+
+    TokenType leftType;
+    TokenType rightType;
+    TokenType relationalOperator;
+
+/* negacion */
+
+if (currentToken.type == TOKEN_NOT) {
+
+    advance();
+
+    /* !( condicion ) */
+
+    if (currentToken.type == TOKEN_LPAREN) {
+
         advance();
+
+        parseCondition();
+
+        expect(TOKEN_RPAREN);
+
+        return;
     }
+}
 
-    parseExpression();
+    leftType = parseExpression();
 
+    /* operador relacional */
     if (!isRelational(currentToken.type)) {
         syntaxError("Operador relacional esperado");
     }
 
+    relationalOperator = currentToken.type;
+
     advance();
 
-    parseExpression();
+    rightType = parseExpression();
 
-    while (currentToken.type == TOKEN_AND ||
-           currentToken.type == TOKEN_OR) {
+    /* comparacion produce bool */
+    leftType = TOKEN_BOOL;
+    rightType = TOKEN_BOOL;
 
-        advance();
+    /* validacion semantica */
 
-        parseExpression();
+    /* bool solo con == y != */
+/* PERO permitir resultados booleanos */
 
-        if (!isRelational(currentToken.type)) {
-            syntaxError("Operador relacional esperado");
+    if ((leftType == TOKEN_BOOL ||
+        rightType == TOKEN_BOOL) &&
+
+        relationalOperator != TOKEN_EQUAL &&
+        relationalOperator != TOKEN_NOT_EQUAL) {
+
+        /* permitir bool provenientes de comparaciones */
+
+        if (!(leftType == TOKEN_BOOL &&
+            rightType == TOKEN_BOOL)) {
+
+            semanticError(
+                "Comparacion invalida con bool",
+                currentToken.line
+            );
         }
-
-        advance();
-
-        parseExpression();
     }
+
+    /* string solo con == y != */
+    if ((leftType == TOKEN_STRING ||
+         rightType == TOKEN_STRING) &&
+
+        relationalOperator != TOKEN_EQUAL &&
+        relationalOperator != TOKEN_NOT_EQUAL) {
+
+        semanticError(
+            "Comparacion invalida con string",
+            currentToken.line
+        );
+    }
+
+    /* tipos incompatibles */
+
+    if (leftType != rightType) {
+
+        /* permitir int <-> float */
+
+        if (!((leftType == TOKEN_INT &&
+               rightType == TOKEN_FLOAT) ||
+
+              (leftType == TOKEN_FLOAT &&
+               rightType == TOKEN_INT))) {
+
+            semanticError(
+                "Tipos incompatibles en comparacion",
+                currentToken.line
+            );
+        }
+    }
+
+    /* && y || */
+
+/* operadores logicos */
+
+while (currentToken.type == TOKEN_AND ||
+       currentToken.type == TOKEN_OR) {
+
+    advance();
+
+    /* siguiente comparacion */
+
+    leftType = parseExpression();
+
+    if (!isRelational(currentToken.type)) {
+
+        syntaxError(
+            "Operador relacional esperado"
+        );
+    }
+
+    advance();
+
+    rightType = parseExpression();
+
+    /* validar */
+
+    if (!((leftType == TOKEN_INT ||
+           leftType == TOKEN_FLOAT) &&
+
+          (rightType == TOKEN_INT ||
+           rightType == TOKEN_FLOAT))) {
+
+        semanticError(
+            "Operacion logica invalida",
+            currentToken.line
+        );
+    }
+
+    leftType = TOKEN_BOOL;
+}
 }
 
 /* declaración */
@@ -374,15 +642,28 @@ void parseDeclaration() {
     if (symbolExistsInCurrentScope(variableName, currentScope)) {
         semanticError("Variable redeclarada", currentToken.line);
     }
+    expressionNode =
+    createValueNode(
+        "IDENTIFIER",
+        variableName
+    );
+
+advance();
+
+/* agregar simbolo */
+addSymbol(variableName,
+          declaredType,
+          currentScope);
+
+/* declaracion con inicializacion */
+if (currentToken.type == TOKEN_ASSIGN) {
 
     advance();
 
-    expect(TOKEN_ASSIGN);
-
-    /* obtener tipo real de la expresion */
+    /* analizar expresion */
     expressionType = parseExpression();
 
-    /* validar compatibilidad */
+    /* validar tipos */
     if (!areTypesCompatible(declaredType,
                             expressionType)) {
 
@@ -392,13 +673,28 @@ void parseDeclaration() {
         );
     }
 
-    addSymbol(variableName, declaredType, currentScope);
+    /* marcar inicializada */
+    setInitialized(variableName,
+                   currentScope);
+}
 
     printf("Declaracion encontrada: %s\n",
         variableName);    
 
-    /* AST */
-appendNode(&astRoot, createNode("DECLARATION", variableName));
+    /* AST declaracion */
+    ASTNode *declarationNode =
+        createNode(
+            "DECLARATION",
+            variableName
+        );
+
+    /* conectar expresion */
+    declarationNode->left =
+        expressionNode;
+
+    /* agregar al AST */
+    appendNode(&astRoot,
+            declarationNode);
     expect(TOKEN_SEMICOLON);
 }
 
@@ -421,28 +717,56 @@ void parseAssignment() {
     expect(TOKEN_ASSIGN);
 
     parseExpression();
+    setInitialized(variableName, currentScope);
 
-    /* AST */
-    appendNode(&astRoot, createNode("ASSIGNMENT", variableName));
+    /* AST asignacion */
+    ASTNode *assignmentNode =
+        createNode(
+            "ASSIGNMENT",
+            variableName
+        );
+
+    /* conectar expresion */
+    assignmentNode->left =
+        expressionNode;
+
+    /* agregar */
+    appendNode(&astRoot,
+            assignmentNode);
     expect(TOKEN_SEMICOLON);
 }
 
 /* print */
 void parsePrint() {
-    char printValue[100];
+
+    char printValue[100] = "expression";
 
     expect(TOKEN_PRINT);
     expect(TOKEN_LPAREN);
 
+    /* string literal */
     if (currentToken.type == TOKEN_STRING_LITERAL) {
-        strcpy(printValue, currentToken.lexeme);
 
-        printf("%s\n", printValue);
+        strcpy(printValue,
+               currentToken.lexeme);
     }
 
     parseExpression();
 
-    appendNode(&astRoot, createNode("PRINT", printValue));
+    /* AST print */
+    ASTNode *printNode =
+        createNode(
+            "PRINT",
+            printValue
+        );
+
+    /* conectar expresion */
+    printNode->left =
+        expressionNode;
+
+    /* agregar */
+    appendNode(&astRoot,
+            printNode);
 
     expect(TOKEN_RPAREN);
     expect(TOKEN_SEMICOLON);
@@ -471,30 +795,80 @@ void parseDoWhile() {
 
 /* For */
 void parseFor() {
+
+    char variableName[50];
+    char declaredType[20];
+
+    TokenType expressionType;
+
     expect(TOKEN_FOR);
     expect(TOKEN_LPAREN);
 
-    /* declaración */
+    /* tipo */
+
     if (!isType(currentToken.type)) {
-        syntaxError("Se esperaba tipo de dato en for");
+        syntaxError(
+            "Se esperaba tipo de dato en for"
+        );
     }
+
+    strcpy(
+        declaredType,
+        tokenTypeToDataType(currentToken.type)
+    );
 
     advance();
 
-    expect(TOKEN_IDENTIFIER);
+    /* identificador */
+
+    if (currentToken.type != TOKEN_IDENTIFIER) {
+        syntaxError("Identificador esperado");
+    }
+
+    strcpy(variableName,
+           currentToken.lexeme);
+
+    advance();
+
     expect(TOKEN_ASSIGN);
 
-    parseExpression();
+    /* expresion inicial */
+
+    expressionType = parseExpression();
+
+    if (!areTypesCompatible(
+            declaredType,
+            expressionType)) {
+
+        semanticError(
+            "Tipos incompatibles en for",
+            currentToken.line
+        );
+    }
+
+    /* agregar variable */
+    addSymbol(variableName,
+              declaredType,
+              currentScope);
+
+    setInitialized(variableName,
+                   currentScope);
 
     expect(TOKEN_SEMICOLON);
 
-    /* condición */
+    /* condicion */
     parseCondition();
 
     expect(TOKEN_SEMICOLON);
 
     /* incremento */
-    expect(TOKEN_IDENTIFIER);
+
+    if (currentToken.type != TOKEN_IDENTIFIER) {
+        syntaxError("Identificador esperado");
+    }
+
+    advance();
+
     expect(TOKEN_ASSIGN);
 
     parseExpression();

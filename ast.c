@@ -17,6 +17,7 @@ ASTNode* createNode(const char *type, const char *value) {
 
     node->left = NULL;
     node->right = NULL;
+    node->next = NULL;
 
     return node;
 }
@@ -31,11 +32,11 @@ void appendNode(ASTNode **root, ASTNode *newNode) {
 
     current = *root;
 
-    while (current->right != NULL) {
-        current = current->right;
+    while (current->next != NULL) {
+        current = current->next;
     }
 
-    current->right = newNode;
+    current->next = newNode;
 
     printf("Nodo agregado: %s (%s)\n",
        newNode->type,
@@ -45,14 +46,16 @@ void appendNode(ASTNode **root, ASTNode *newNode) {
 /* imprimir AST */
 void printAST(ASTNode *node, int level) {
 
+    int i;
+
     while (node != NULL) {
 
-        int i;
-
+        /* indentacion */
         for (i = 0; i < level; i++) {
             printf("   ");
         }
 
+        /* nodo */
         printf("%s", node->type);
 
         if (strlen(node->value) > 0) {
@@ -61,9 +64,13 @@ void printAST(ASTNode *node, int level) {
 
         printf("\n");
 
+        /* hijos */
         printAST(node->left, level + 1);
 
-        node = node->right;
+        printAST(node->right, level + 1);
+
+        /* siguiente sentencia */
+        node = node->next;
     }
 }
 /* liberar memoria */
@@ -76,4 +83,27 @@ void freeAST(ASTNode *node) {
     freeAST(node->right);
 
     free(node);
+}
+
+/* crear nodo operador */
+ASTNode* createOperatorNode(
+    const char *operator,
+    ASTNode *left,
+    ASTNode *right) {
+
+    ASTNode *node =
+        createNode("OPERATOR", operator);
+
+    node->left = left;
+    node->right = right;
+
+    return node;
+}
+
+/* crear nodo valor */
+ASTNode* createValueNode(
+    const char *type,
+    const char *value) {
+
+    return createNode(type, value);
 }
