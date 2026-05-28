@@ -1,0 +1,11 @@
+program
+
+// comentario
+int x = 5;
+
+/*
+comentario
+multilinea
+*/
+
+end

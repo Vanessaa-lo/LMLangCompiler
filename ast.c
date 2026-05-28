@@ -36,32 +36,36 @@ void appendNode(ASTNode **root, ASTNode *newNode) {
     }
 
     current->right = newNode;
+
+    printf("Nodo agregado: %s (%s)\n",
+       newNode->type,
+       newNode->value);
 }
 
 /* imprimir AST */
 void printAST(ASTNode *node, int level) {
-    int i;
 
-    if (node == NULL) {
-        return;
+    while (node != NULL) {
+
+        int i;
+
+        for (i = 0; i < level; i++) {
+            printf("   ");
+        }
+
+        printf("%s", node->type);
+
+        if (strlen(node->value) > 0) {
+            printf(" (%s)", node->value);
+        }
+
+        printf("\n");
+
+        printAST(node->left, level + 1);
+
+        node = node->right;
     }
-
-    for (i = 0; i < level; i++) {
-        printf("   ");
-    }
-
-    printf("%s", node->type);
-
-    if (strlen(node->value) > 0) {
-        printf(" (%s)", node->value);
-    }
-
-    printf("\n");
-
-    printAST(node->left, level + 1);
-    printAST(node->right, level + 1);
 }
-
 /* liberar memoria */
 void freeAST(ASTNode *node) {
     if (node == NULL) {

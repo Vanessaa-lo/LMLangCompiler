@@ -154,57 +154,112 @@ Token getNextToken() {
         return token;
     }
 
-    /* Números */
-    if (isdigit(ch)) {
-        int i = 0;
-        int isFloat = 0;
+/* Números */
+if (isdigit(ch)) {
 
-        do {
-            token.lexeme[i++] = ch;
-            ch = fgetc(sourceFile);
+    int i = 0;
+    int dotCount = 0;
 
-            if (ch == '.') {
-                isFloat = 1;
-                token.lexeme[i++] = ch;
-                ch = fgetc(sourceFile);
+    while (isdigit(ch) || ch == '.') {
+
+        if (ch == '.') {
+
+            dotCount++;
+
+            /* Número inválido */
+            if (dotCount > 1) {
+
+                token.type = TOKEN_ERROR;
+
+                strcpy(token.lexeme,
+                       "Numero invalido");
+
+                return token;
             }
+        }
 
-        } while (isdigit(ch));
+        token.lexeme[i++] = ch;
 
-        token.lexeme[i] = '\0';
-        ungetc(ch, sourceFile);
-
-        token.type = isFloat ? TOKEN_FLOAT_NUMBER : TOKEN_NUMBER;
-        return token;
+        ch = fgetc(sourceFile);
     }
 
+    token.lexeme[i] = '\0';
+
+    ungetc(ch, sourceFile);
+
+    token.type = (dotCount == 1)
+                 ? TOKEN_FLOAT_NUMBER
+                 : TOKEN_NUMBER;
+
+    return token;
+}
+
     /* Strings */
+
     if (ch == '"') {
+
         int i = 0;
 
-        while ((ch = fgetc(sourceFile)) != '"' && ch != EOF) {
+        while ((ch = fgetc(sourceFile)) != '"') {
+
+            /* String sin cerrar */
+            if (ch == EOF || ch == '\n') {
+
+                token.type = TOKEN_ERROR;
+
+                strcpy(token.lexeme,
+                    "String sin cerrar");
+
+                return token;
+            }
+
             token.lexeme[i++] = ch;
         }
 
         token.lexeme[i] = '\0';
 
         token.type = TOKEN_STRING_LITERAL;
+
         return token;
     }
 
-    /* Chars */
-    if (ch == '\'') {
-        token.lexeme[0] = fgetc(sourceFile);
-        token.lexeme[1] = '\0';
+/* Chars */
+if (ch == '\'') {
 
-        if (fgetc(sourceFile) != '\'') {
-            token.type = TOKEN_ERROR;
-            return token;
-        }
+    int charValue = fgetc(sourceFile);
 
-        token.type = TOKEN_CHAR_LITERAL;
+    /* Char sin cerrar */
+    if (charValue == EOF ||
+        charValue == '\n') {
+
+        token.type = TOKEN_ERROR;
+
+        strcpy(token.lexeme,
+               "Char sin cerrar");
+
         return token;
     }
+
+    int closingQuote = fgetc(sourceFile);
+
+    /* Char vacío o múltiple */
+    if (closingQuote != '\'') {
+
+        token.type = TOKEN_ERROR;
+
+        strcpy(token.lexeme,
+               "Char invalido");
+
+        return token;
+    }
+
+    token.lexeme[0] = charValue;
+    token.lexeme[1] = '\0';
+
+    token.type = TOKEN_CHAR_LITERAL;
+
+    return token;
+}
 
     /* Operadores y símbolos */
     switch(ch) {
@@ -224,8 +279,64 @@ Token getNextToken() {
             break;
 
         case '/':
-            token.type = TOKEN_DIVIDE;
-            strcpy(token.lexeme, "/");
+
+            ch = fgetc(sourceFile);
+
+            /* Comentario de linea */
+            if (ch == '/') {
+
+                while ((ch = fgetc(sourceFile)) != '\n' &&
+                    ch != EOF);
+
+                if (ch == '\n') {
+                    currentLine++;
+                }
+
+                return getNextToken();
+            }
+
+            /* Comentario multilinea */
+            else if (ch == '*') {
+
+                int prev = 0;
+
+                while ((ch = fgetc(sourceFile)) != EOF) {
+
+                    if (ch == '\n') {
+                        currentLine++;
+                    }
+
+                    if (prev == '*' && ch == '/') {
+                        break;
+                    }
+
+                    prev = ch;
+                }
+
+                /* Comentario sin cerrar */
+                if (ch == EOF) {
+
+                    token.type = TOKEN_ERROR;
+
+                    strcpy(token.lexeme,
+                        "Comentario sin cerrar");
+
+                    return token;
+                }
+
+                return getNextToken();
+            }
+
+            /* Division normal */
+            else {
+
+                ungetc(ch, sourceFile);
+
+                token.type = TOKEN_DIVIDE;
+
+                strcpy(token.lexeme, "/");
+            }
+
             break;
 
         case '%':
@@ -329,10 +440,14 @@ Token getNextToken() {
             }
             break;
 
-        default:
+            default:
+
             token.type = TOKEN_ERROR;
-            token.lexeme[0] = ch;
-            token.lexeme[1] = '\0';
+
+            sprintf(token.lexeme,
+                    "Caracter invalido: %c",
+                    ch);
+
             break;
     }
 

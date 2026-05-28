@@ -14,7 +14,18 @@ ASTNode *astRoot = NULL;
 
 /* avanzar */
 void advance() {
+
     currentToken = getNextToken();
+
+    /* Error lexico */
+    if (currentToken.type == TOKEN_ERROR) {
+
+        printf("Error lexico en linea %d: %s\n",
+               currentToken.line,
+               currentToken.lexeme);
+
+        exit(1);
+    }
 }
 
 /* error */
@@ -88,36 +99,224 @@ int isArithmeticOperator(TokenType type) {
            type == TOKEN_MOD;
 }
 
-void parseExpression() {
-    if (currentToken.type == TOKEN_IDENTIFIER ||
-        currentToken.type == TOKEN_NUMBER ||
-        currentToken.type == TOKEN_FLOAT_NUMBER ||
-        currentToken.type == TOKEN_STRING_LITERAL ||
-        currentToken.type == TOKEN_CHAR_LITERAL ||
-        currentToken.type == TOKEN_TRUE ||
-        currentToken.type == TOKEN_FALSE) {
+/* prototipos */
+TokenType parseExpression();
+TokenType parseTerm();
+TokenType parseFactor();
 
-        advance();
-    } else {
-        syntaxError("Expresion invalida");
+/* factor */
+TokenType parseFactor() {
+
+    TokenType type;
+
+    /* identificador */
+    if (currentToken.type == TOKEN_IDENTIFIER) {
+
+type = getVariableType(currentToken.lexeme,
+                       currentScope);
+
+    if (type == TOKEN_ERROR) {
+
+        semanticError(
+            "Variable no declarada",
+            currentToken.line
+        );
     }
 
-    while (isArithmeticOperator(currentToken.type)) {
+        type = TOKEN_INT;
+
         advance();
 
-        if (currentToken.type == TOKEN_IDENTIFIER ||
-            currentToken.type == TOKEN_NUMBER ||
-            currentToken.type == TOKEN_FLOAT_NUMBER ||
-            currentToken.type == TOKEN_STRING_LITERAL ||
-            currentToken.type == TOKEN_CHAR_LITERAL ||
-            currentToken.type == TOKEN_TRUE ||
-            currentToken.type == TOKEN_FALSE) {
+        return type;
+    }
 
-            advance();
-        } else {
-            syntaxError("Operando esperado");
+    /* enteros */
+    else if (currentToken.type == TOKEN_NUMBER) {
+
+        advance();
+
+        return TOKEN_INT;
+    }
+
+    /* flotantes */
+    else if (currentToken.type == TOKEN_FLOAT_NUMBER) {
+
+        advance();
+
+        return TOKEN_FLOAT;
+    }
+
+    /* strings */
+    else if (currentToken.type == TOKEN_STRING_LITERAL) {
+
+        advance();
+
+        return TOKEN_STRING;
+    }
+
+    /* chars */
+    else if (currentToken.type == TOKEN_CHAR_LITERAL) {
+
+        advance();
+
+        return TOKEN_CHAR;
+    }
+
+    /* bool */
+    else if (currentToken.type == TOKEN_TRUE ||
+             currentToken.type == TOKEN_FALSE) {
+
+        advance();
+
+        return TOKEN_BOOL;
+    }
+
+    /* parentesis */
+    else if (currentToken.type == TOKEN_LPAREN) {
+
+        advance();
+
+        type = parseExpression();
+
+        expect(TOKEN_RPAREN);
+
+        return type;
+    }
+
+    else {
+        syntaxError("Factor invalido");
+    }
+
+    return TOKEN_ERROR;
+}
+
+/* termino */
+TokenType parseTerm() {
+
+    TokenType leftType;
+    TokenType rightType;
+    TokenType operatorType;
+
+    leftType = parseFactor();
+
+    while (currentToken.type == TOKEN_MULTIPLY ||
+           currentToken.type == TOKEN_DIVIDE ||
+           currentToken.type == TOKEN_MOD) {
+
+        operatorType = currentToken.type;
+
+        advance();
+
+        rightType = parseFactor();
+
+        /* Validacion semantica */
+
+        /* No permitir strings */
+        if (leftType == TOKEN_STRING ||
+            rightType == TOKEN_STRING) {
+
+            semanticError(
+                "Operacion invalida con strings",
+                currentToken.line
+            );
+        }
+
+        /* No permitir bool */
+        if (leftType == TOKEN_BOOL ||
+            rightType == TOKEN_BOOL) {
+
+            semanticError(
+                "Operacion invalida con bool",
+                currentToken.line
+            );
+        }
+
+        /* Division entre cero */
+        if (operatorType == TOKEN_DIVIDE &&
+            rightType == TOKEN_NUMBER) {
+
+            /*
+               Aun no evaluamos valores reales,
+               esto se mejorara despues
+            */
+        }
+
+        /* float domina */
+        if (leftType == TOKEN_FLOAT ||
+            rightType == TOKEN_FLOAT) {
+
+            leftType = TOKEN_FLOAT;
+        }
+        else {
+            leftType = TOKEN_INT;
         }
     }
+
+    return leftType;
+}
+/* expresion */
+TokenType parseExpression() {
+
+    TokenType leftType;
+    TokenType rightType;
+    TokenType operatorType;
+
+    leftType = parseTerm();
+
+    while (currentToken.type == TOKEN_PLUS ||
+           currentToken.type == TOKEN_MINUS) {
+
+        operatorType = currentToken.type;
+
+        advance();
+
+        rightType = parseTerm();
+
+        /* Strings */
+
+        if (leftType == TOKEN_STRING ||
+            rightType == TOKEN_STRING) {
+
+            /* Solo permitir concatenacion con + */
+            if (operatorType != TOKEN_PLUS) {
+
+                semanticError(
+                    "Operacion invalida con strings",
+                    currentToken.line
+                );
+            }
+
+            leftType = TOKEN_STRING;
+        }
+
+        /* Bool */
+
+        else if (leftType == TOKEN_BOOL ||
+                 rightType == TOKEN_BOOL) {
+
+            semanticError(
+                "Operacion invalida con bool",
+                currentToken.line
+            );
+        }
+
+        /* float domina */
+
+        else if (leftType == TOKEN_FLOAT ||
+                 rightType == TOKEN_FLOAT) {
+
+            leftType = TOKEN_FLOAT;
+        }
+
+        /* enteros */
+
+        else {
+
+            leftType = TOKEN_INT;
+        }
+    }
+
+    return leftType;
 }
 /* condición */
 void parseCondition() {
@@ -180,15 +379,23 @@ void parseDeclaration() {
 
     expect(TOKEN_ASSIGN);
 
-    expressionType = currentToken.type;
+    /* obtener tipo real de la expresion */
+    expressionType = parseExpression();
 
-    if (!areTypesCompatible(declaredType, expressionType)) {
-        semanticError("Tipos incompatibles en declaracion", currentToken.line);
+    /* validar compatibilidad */
+    if (!areTypesCompatible(declaredType,
+                            expressionType)) {
+
+        semanticError(
+            "Tipos incompatibles en declaracion",
+            currentToken.line
+        );
     }
 
-    parseExpression();
-
     addSymbol(variableName, declaredType, currentScope);
+
+    printf("Declaracion encontrada: %s\n",
+        variableName);    
 
     /* AST */
 appendNode(&astRoot, createNode("DECLARATION", variableName));

@@ -33,31 +33,42 @@ const char* tokenTypeToDataType(TokenType type) {
 }
 
 /* validar compatibilidad */
-int areTypesCompatible(const char *declaredType, TokenType expressionType) {
+int areTypesCompatible(const char *declaredType,
+                       TokenType expressionType) {
+
+    /* int */
     if (strcmp(declaredType, "int") == 0 &&
-        expressionType == TOKEN_NUMBER) {
+        expressionType == TOKEN_INT) {
+
         return 1;
     }
 
+    /* float */
     if (strcmp(declaredType, "float") == 0 &&
-        (expressionType == TOKEN_FLOAT_NUMBER ||
-         expressionType == TOKEN_NUMBER)) {
+        (expressionType == TOKEN_FLOAT ||
+         expressionType == TOKEN_INT)) {
+
         return 1;
     }
 
+    /* char */
     if (strcmp(declaredType, "char") == 0 &&
-        expressionType == TOKEN_CHAR_LITERAL) {
+        expressionType == TOKEN_CHAR) {
+
         return 1;
     }
 
+    /* bool */
     if (strcmp(declaredType, "bool") == 0 &&
-        (expressionType == TOKEN_TRUE ||
-         expressionType == TOKEN_FALSE)) {
+        expressionType == TOKEN_BOOL) {
+
         return 1;
     }
 
+    /* string */
     if (strcmp(declaredType, "string") == 0 &&
-        expressionType == TOKEN_STRING_LITERAL) {
+        expressionType == TOKEN_STRING) {
+
         return 1;
     }
 

@@ -79,3 +79,36 @@ void printSymbolTable() {
                symbolTable[i].scope);
     }
 }
+
+/* obtener tipo de variable */
+TokenType getVariableType(const char *name, int scope) {
+
+    int i;
+
+    /* buscar desde el scope actual hacia arriba */
+    for (i = symbolCount - 1; i >= 0; i--) {
+
+        if (strcmp(symbolTable[i].name, name) == 0 &&
+            symbolTable[i].scope <= scope) {
+
+            /* convertir string -> TokenType */
+
+            if (strcmp(symbolTable[i].type, "int") == 0)
+                return TOKEN_INT;
+
+            if (strcmp(symbolTable[i].type, "float") == 0)
+                return TOKEN_FLOAT;
+
+            if (strcmp(symbolTable[i].type, "char") == 0)
+                return TOKEN_CHAR;
+
+            if (strcmp(symbolTable[i].type, "bool") == 0)
+                return TOKEN_BOOL;
+
+            if (strcmp(symbolTable[i].type, "string") == 0)
+                return TOKEN_STRING;
+        }
+    }
+
+    return TOKEN_ERROR;
+}
