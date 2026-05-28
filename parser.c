@@ -660,7 +660,9 @@ void parseDeclaration() {
 
     strcpy(variableName, currentToken.lexeme);
 
-    if (symbolExistsInCurrentScope(variableName, currentScope)) {
+    if (symbolExists(
+        variableName,
+        currentScope)) {
         semanticError("Variable redeclarada", currentToken.line);
     }
     expressionNode =
@@ -865,14 +867,16 @@ void parseFor() {
 
     advance();
 
-    /* identificador */
+    /* redeclaracion global */
 
-    if (currentToken.type != TOKEN_IDENTIFIER) {
-        syntaxError("Identificador esperado");
+    if (symbolExists(variableName,
+                    currentScope)) {
+
+        semanticError(
+            "Variable redeclarada",
+            currentToken.line
+        );
     }
-
-    strcpy(variableName,
-           currentToken.lexeme);
 
     advance();
 
@@ -926,9 +930,6 @@ void parseFor() {
 
     parseBlock();
 
-    removeScopeSymbols(currentScope);
-
-    currentScope--;
 }
 
 /* while */
