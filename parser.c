@@ -320,25 +320,46 @@ TokenType parseTerm() {
                 );
         }
 
-else if (operatorType == TOKEN_DIVIDE) {
+    else if (operatorType == TOKEN_DIVIDE) {
 
-    expressionNode =
-        createOperatorNode(
-            "/",
-            leftNode,
-            rightNode
-        );
-}
+        /* division entre cero */
 
-else if (operatorType == TOKEN_MOD) {
+        if (rightNode != NULL &&
+            strcmp(rightNode->value, "0") == 0) {
 
-    expressionNode =
-        createOperatorNode(
-            "%",
-            leftNode,
-            rightNode
-        );
-}
+            semanticError(
+                "Division entre cero",
+                currentToken.line
+            );
+        }
+
+        leftNode =
+            createOperatorNode(
+                "/",
+                leftNode,
+                rightNode
+            );
+    }
+    else if (operatorType == TOKEN_MOD) {
+
+        /* modulo entre cero */
+
+        if (rightNode != NULL &&
+            strcmp(rightNode->value, "0") == 0) {
+
+            semanticError(
+                "Modulo entre cero",
+                currentToken.line
+            );
+        }
+
+        leftNode =
+            createOperatorNode(
+                "%",
+                leftNode,
+                rightNode
+            );
+    }
 
         /* Validacion semantica */
 
@@ -716,8 +737,33 @@ void parseAssignment() {
 
     expect(TOKEN_ASSIGN);
 
+TokenType variableType;
+TokenType expressionType;
+
+/* tipo real variable */
+variableType =
+    getVariableType(
+        variableName,
+        currentScope
+    );
+
+/* analizar expresion */
+expressionType =
     parseExpression();
-    setInitialized(variableName, currentScope);
+
+/* validar tipos */
+if (!areTypesCompatible(
+        tokenTypeToDataType(variableType),
+        expressionType)) {
+
+    semanticError(
+        "Tipos incompatibles en asignacion",
+        currentToken.line
+    );
+}
+
+setInitialized(variableName,
+               currentScope);
 
     /* AST asignacion */
     ASTNode *assignmentNode =

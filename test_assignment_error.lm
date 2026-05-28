@@ -1,0 +1,7 @@
+program
+
+int x = 5;
+
+x = "hola";
+
+end

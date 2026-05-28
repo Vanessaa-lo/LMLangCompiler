@@ -25,18 +25,31 @@ void addSymbol(const char *name, const char *type, int scope) {
     symbolCount++;
 }
 
-/* Verifica existencia */
+/* verificar existencia */
 int symbolExists(const char *name, int scope) {
+
     int i;
+    int bestScope = -1;
 
     for (i = 0; i < symbolCount; i++) {
-        if (strcmp(symbolTable[i].name, name) == 0 &&
-            symbolTable[i].scope <= scope) {
-            return 1;
+
+        if (strcmp(symbolTable[i].name,
+                   name) == 0) {
+
+            /* scope valido */
+            if (symbolTable[i].scope <= scope) {
+
+                if (symbolTable[i].scope >
+                    bestScope) {
+
+                    bestScope =
+                        symbolTable[i].scope;
+                }
+            }
         }
     }
 
-    return 0;
+    return bestScope != -1;
 }
 
 int symbolExistsInCurrentScope(const char *name, int scope) {
